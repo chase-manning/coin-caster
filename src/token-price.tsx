@@ -8,17 +8,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
-function TickerListItem({
-  symbol,
-  onSelect,
-  isSelected,
-}: {
-  symbol: string;
-  onSelect: () => void;
-  isSelected: boolean;
-}) {
+function TickerListItem({ symbol, isSelected }: { symbol: string; isSelected: boolean }) {
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
-  const { data: price } = useTokenPrice(isSelected ? symbol : null);
+  const { data: price, refetch: refreshPrice } = useTokenPrice(isSelected ? symbol : null);
 
   return (
     <List.Item
@@ -27,7 +19,7 @@ function TickerListItem({
       detail={<List.Item.Detail markdown={price ? `$${price}` : "Loading Price.."} />}
       actions={
         <ActionPanel>
-          <Action title="Select" onAction={onSelect} />
+          <Action title="Refresh Price" onAction={refreshPrice} />
           {isFavorite(symbol) ? (
             <Action title="Remove from Favorites" onAction={() => removeFromFavorites(symbol)} />
           ) : (
@@ -73,24 +65,14 @@ function TokenPriceContent() {
           <>
             <List.Section title="Favorites">
               {filteredFavorites?.map((symbol) => (
-                <TickerListItem
-                  key={symbol}
-                  symbol={symbol}
-                  onSelect={() => setToken(symbol)}
-                  isSelected={token === symbol}
-                />
+                <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
               ))}
             </List.Section>
             <List.Section title="All Tokens">
               {filteredAllTokens
                 .filter((symbol) => !isFavorite(symbol))
                 .map((symbol) => (
-                  <TickerListItem
-                    key={symbol}
-                    symbol={symbol}
-                    onSelect={() => setToken(symbol)}
-                    isSelected={token === symbol}
-                  />
+                  <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
                 ))}
             </List.Section>
           </>
