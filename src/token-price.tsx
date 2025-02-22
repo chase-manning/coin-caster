@@ -1,12 +1,21 @@
-import { Action, ActionPanel, List } from "@raycast/api";
+import { Action, ActionPanel, List, LocalStorage } from "@raycast/api";
 import { useState } from "react";
 import useFavorites from "./useFavorites";
 import { distance } from "fastest-levenshtein";
 import useTokenPrice from "./useTokenPrice";
 import useSymbols from "./useSymbols";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 
 const queryClient = new QueryClient();
+const asyncStoragePersister = createAsyncStoragePersister({
+  storage: {
+    getItem: LocalStorage.getItem<string>,
+    setItem: LocalStorage.setItem,
+    removeItem: LocalStorage.removeItem,
+  },
+});
 
 function TickerListItem({ symbol, isSelected }: { symbol: string; isSelected: boolean }) {
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
@@ -84,8 +93,8 @@ function TokenPriceContent() {
 
 export default function Command() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: asyncStoragePersister }}>
       <TokenPriceContent />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
