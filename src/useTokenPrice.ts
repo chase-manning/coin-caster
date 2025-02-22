@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiBaseUrl } from "./constants";
 import fetch from "node-fetch";
 
-const getPrice = async (symbol: string): Promise<number> => {
+export const getPrice = async (symbol: string): Promise<number> => {
   const response = await fetch(`${apiBaseUrl}/price/${symbol}/usd`);
   const data = (await response.json()) as { price: string };
   return Number(data.price);

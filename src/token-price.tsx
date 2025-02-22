@@ -1,38 +1,28 @@
-import { Action, ActionPanel, List, LocalStorage } from "@raycast/api";
+import { Action, ActionPanel, List } from "@raycast/api";
 import { useState } from "react";
-import useFavorites from "./useFavorites";
+import useWatchlist from "./useWatchlist";
 import { distance } from "fastest-levenshtein";
 import useTokenPrice from "./useTokenPrice";
 import useSymbols from "./useSymbols";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-
-const queryClient = new QueryClient();
-const asyncStoragePersister = createAsyncStoragePersister({
-  storage: {
-    getItem: LocalStorage.getItem<string>,
-    setItem: LocalStorage.setItem,
-    removeItem: LocalStorage.removeItem,
-  },
-});
+import CommandWrapper from "./CommandWrapper";
+import { formatPrice } from "./utilities";
 
 function TickerListItem({ symbol, isSelected }: { symbol: string; isSelected: boolean }) {
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   const { data: price, refetch: refreshPrice } = useTokenPrice(isSelected ? symbol : null);
 
   return (
     <List.Item
       id={symbol}
       title={symbol}
-      detail={<List.Item.Detail markdown={price ? `$${price}` : "Loading Price.."} />}
+      detail={<List.Item.Detail markdown={price ? `$${formatPrice(price)}` : "Loading Price.."} />}
       actions={
         <ActionPanel>
           <Action title="Refresh Price" onAction={refreshPrice} />
-          {isFavorite(symbol) ? (
-            <Action title="Remove from Favorites" onAction={() => removeFromFavorites(symbol)} />
+          {isInWatchlist(symbol) ? (
+            <Action title="Remove from Watchlist" onAction={() => removeFromWatchlist(symbol)} />
           ) : (
-            <Action title="Add to Favorites" onAction={() => addToFavorites(symbol)} />
+            <Action title="Add to Watchlist" onAction={() => addToWatchlist(symbol)} />
           )}
         </ActionPanel>
       }
@@ -45,7 +35,7 @@ function TokenPriceContent() {
   const [token, setToken] = useState<string | null>(null);
 
   const { data: symbols } = useSymbols();
-  const { favorites, isFavorite } = useFavorites();
+  const { watchlist, isInWatchlist } = useWatchlist();
 
   const filterTokens = (tokens: string[]) => {
     return tokens
@@ -56,7 +46,7 @@ function TokenPriceContent() {
       });
   };
 
-  const filteredFavorites = filterTokens(favorites ?? []);
+  const filteredWatchlist = filterTokens(watchlist ?? []);
   const filteredAllTokens = filterTokens(symbols ?? []);
 
   return (
@@ -72,14 +62,14 @@ function TokenPriceContent() {
       >
         {symbols && (
           <>
-            <List.Section title="Favorites">
-              {filteredFavorites?.map((symbol) => (
+            <List.Section title="Watchlist">
+              {filteredWatchlist?.map((symbol) => (
                 <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
               ))}
             </List.Section>
             <List.Section title="All Tokens">
               {filteredAllTokens
-                .filter((symbol) => !isFavorite(symbol))
+                .filter((symbol) => !isInWatchlist(symbol))
                 .map((symbol) => (
                   <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
                 ))}
@@ -93,8 +83,8 @@ function TokenPriceContent() {
 
 export default function Command() {
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: asyncStoragePersister }}>
+    <CommandWrapper>
       <TokenPriceContent />
-    </PersistQueryClientProvider>
+    </CommandWrapper>
   );
 }
