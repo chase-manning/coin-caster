@@ -2,35 +2,21 @@ import { Action, ActionPanel, Detail, List } from "@raycast/api";
 import { useEffect, useState } from "react";
 import fetch from "node-fetch";
 
-const API_KEY = "9ceNnUHS3OPXFYoRmf5PJA==k39cMr6LvHSVeObq";
-const ENDPOINT = "https://api.api-ninjas.com/v1/cryptoprice?symbol=";
-const SYMBOLS = "https://api.api-ninjas.com/v1/cryptosymbols";
+const apiBaseUrl = "https://coin-caster-api.daniel-191.workers.dev";
 
 interface PriceResponse {
-  symbol: string;
   price: string;
-  timestamp: number;
 }
 
 const getPrice = async (symbol: string): Promise<PriceResponse> => {
-  const response = await fetch(`${ENDPOINT}${symbol}USD`, {
-    headers: {
-      "X-API-KEY": API_KEY,
-    },
-  });
+  const response = await fetch(`${apiBaseUrl}/price/${symbol}/usd`);
   const data = await response.json();
   return data as PriceResponse;
 };
 
 const getSymbols = async (): Promise<string[]> => {
-  const response = await fetch(SYMBOLS, {
-    headers: {
-      "X-API-KEY": API_KEY,
-    },
-  });
-  const data = await response.json();
-  const symbols = data as { symbols: string[] };
-  return symbols.symbols.filter((symbol) => symbol.endsWith("USD")).map((symbol) => symbol.slice(0, -3));
+  const response = await fetch(`${apiBaseUrl}/symbols/usd`);
+  return response.json() as Promise<string[]>;
 };
 
 export default function Command() {
@@ -52,9 +38,7 @@ export default function Command() {
 
   useEffect(() => {
     getSymbols()
-      .then((data) => {
-        setSymbols(data);
-      })
+      .then(setSymbols)
       .catch(() => {
         throw new Error("Failed to fetch symbols");
       });
@@ -71,25 +55,27 @@ export default function Command() {
           navigationTitle="Token"
           searchBarPlaceholder="Search for a token..."
         >
-          {symbols === null
-            ? "loading..."
-            : symbols
-                .filter((symbol) => search === null || symbol.toLowerCase().includes(search.toLowerCase()))
-                .sort((a, b) => {
-                  if (!search) return 0;
-                  return a.length - b.length;
-                })
-                .map((symbol) => (
-                  <List.Item
-                    key={symbol}
-                    title={symbol}
-                    actions={
-                      <ActionPanel>
-                        <Action title="Select" onAction={() => setToken(symbol)} />
-                      </ActionPanel>
-                    }
-                  />
-                ))}
+          {symbols === null ? (
+            <List.Item title="loading..." />
+          ) : (
+            symbols
+              .filter((symbol) => search === null || symbol.toLowerCase().includes(search.toLowerCase()))
+              .sort((a, b) => {
+                if (!search) return 0;
+                return a.length - b.length;
+              })
+              .map((symbol) => (
+                <List.Item
+                  key={symbol}
+                  title={symbol}
+                  actions={
+                    <ActionPanel>
+                      <Action title="Select" onAction={() => setToken(symbol)} />
+                    </ActionPanel>
+                  }
+                />
+              ))
+          )}
         </List>
       )}
     </>
