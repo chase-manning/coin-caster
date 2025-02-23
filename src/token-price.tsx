@@ -1,83 +1,90 @@
-import { Action, ActionPanel, Detail, List } from "@raycast/api";
-import { useEffect, useState } from "react";
-import fetch from "node-fetch";
+import { Action, ActionPanel, List } from "@raycast/api";
+import { useState } from "react";
+import useWatchlist from "./useWatchlist";
+import { distance } from "fastest-levenshtein";
+import useTokenPrice from "./useTokenPrice";
+import useSymbols from "./useSymbols";
+import CommandWrapper from "./CommandWrapper";
+import { formatPrice } from "./utilities";
 
-const apiBaseUrl = "https://coin-caster-api.daniel-191.workers.dev";
+function TickerListItem({ symbol, isSelected }: { symbol: string; isSelected: boolean }) {
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+  const { data: price, refetch: refreshPrice } = useTokenPrice(isSelected ? symbol : null);
 
-interface PriceResponse {
-  price: string;
+  return (
+    <List.Item
+      id={symbol}
+      title={symbol}
+      detail={<List.Item.Detail markdown={price ? `$${formatPrice(price)}` : "Loading Price.."} />}
+      actions={
+        <ActionPanel>
+          <Action title="Refresh Price" onAction={refreshPrice} />
+          {isInWatchlist(symbol) ? (
+            <Action title="Remove from Watchlist" onAction={() => removeFromWatchlist(symbol)} />
+          ) : (
+            <Action title="Add to Watchlist" onAction={() => addToWatchlist(symbol)} />
+          )}
+        </ActionPanel>
+      }
+    />
+  );
 }
 
-const getPrice = async (symbol: string): Promise<PriceResponse> => {
-  const response = await fetch(`${apiBaseUrl}/price/${symbol}/usd`);
-  const data = await response.json();
-  return data as PriceResponse;
-};
-
-const getSymbols = async (): Promise<string[]> => {
-  const response = await fetch(`${apiBaseUrl}/symbols/usd`);
-  return response.json() as Promise<string[]>;
-};
-
-export default function Command() {
+function TokenPriceContent() {
   const [search, setSearch] = useState<string | null>(null);
-  const [symbols, setSymbols] = useState<string[] | null>(null);
-  const [price, setPrice] = useState<number | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
-    getPrice(token)
-      .then((data) => {
-        setPrice(Number(data.price));
-      })
-      .catch(() => {
-        throw new Error("Failed to fetch price");
-      });
-  }, [token]);
+  const { data: symbols } = useSymbols();
+  const { watchlist, isInWatchlist } = useWatchlist();
 
-  useEffect(() => {
-    getSymbols()
-      .then(setSymbols)
-      .catch(() => {
-        throw new Error("Failed to fetch symbols");
+  const filterTokens = (tokens: string[]) => {
+    return tokens
+      .filter((symbol) => symbol.toLowerCase().includes(search?.toLowerCase() ?? ""))
+      .sort((a, b) => {
+        if (!search) return a < b ? -1 : a === b ? 0 : 1;
+        return distance(a, search) - distance(b, search);
       });
-  }, []);
+  };
+
+  const filteredWatchlist = filterTokens(watchlist ?? []);
+  const filteredAllTokens = filterTokens(symbols ?? []);
 
   return (
     <>
-      {token && <Detail isLoading={price === null} markdown={`# ${price ? `$${price}` : "Loading Price.."}`} />}
-      {!token && (
-        <List
-          isLoading={symbols === null}
-          filtering={false}
-          onSearchTextChange={setSearch}
-          navigationTitle="Token"
-          searchBarPlaceholder="Search for a token..."
-        >
-          {symbols === null ? (
-            <List.Item title="loading..." />
-          ) : (
-            symbols
-              .filter((symbol) => search === null || symbol.toLowerCase().includes(search.toLowerCase()))
-              .sort((a, b) => {
-                if (!search) return 0;
-                return a.length - b.length;
-              })
-              .map((symbol) => (
-                <List.Item
-                  key={symbol}
-                  title={symbol}
-                  actions={
-                    <ActionPanel>
-                      <Action title="Select" onAction={() => setToken(symbol)} />
-                    </ActionPanel>
-                  }
-                />
-              ))
-          )}
-        </List>
-      )}
+      <List
+        isLoading={symbols === undefined}
+        isShowingDetail
+        filtering={false}
+        onSearchTextChange={setSearch}
+        onSelectionChange={(token) => setToken(token)}
+        navigationTitle="Token"
+        searchBarPlaceholder="Search for a token..."
+      >
+        {symbols && (
+          <>
+            <List.Section title="Watchlist">
+              {filteredWatchlist?.map((symbol) => (
+                <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
+              ))}
+            </List.Section>
+            <List.Section title="All Tokens">
+              {filteredAllTokens
+                .filter((symbol) => !isInWatchlist(symbol))
+                .map((symbol) => (
+                  <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
+                ))}
+            </List.Section>
+          </>
+        )}
+      </List>
     </>
+  );
+}
+
+export default function Command() {
+  return (
+    <CommandWrapper>
+      <TokenPriceContent />
+    </CommandWrapper>
   );
 }
