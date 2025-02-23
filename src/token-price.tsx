@@ -6,23 +6,50 @@ import useTokenPrice from "./useTokenPrice";
 import useSymbols from "./useSymbols";
 import CommandWrapper from "./CommandWrapper";
 import { formatPrice } from "./utilities";
+import useCoins, { CoinData } from "./useCoins";
 
-function TickerListItem({ symbol, isSelected }: { symbol: string; isSelected: boolean }) {
+function TickerListItem({ coin, isSelected }: { coin: CoinData; isSelected: boolean }) {
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
-  const { data: price, refetch: refreshPrice } = useTokenPrice(isSelected ? symbol : null);
+  const { data: price, refetch: refreshPrice } = useTokenPrice(isSelected ? coin.symbol : null);
+
+  const currentPrice = price ? price : coin.current_price;
+  const priceChange =
+    coin.price_change_percentage_24h >= 0
+      ? `+${coin.price_change_percentage_24h.toFixed(2)}%`
+      : `${coin.price_change_percentage_24h.toFixed(2)}%`;
 
   return (
     <List.Item
-      id={symbol}
-      title={symbol}
-      detail={<List.Item.Detail markdown={price ? `$${formatPrice(price)}` : "Loading Price.."} />}
+      id={coin.id}
+      title={coin.symbol.toUpperCase()}
+      accessories={[{ text: `$${formatPrice(currentPrice)}` }]}
+      detail={
+        <List.Item.Detail
+          metadata={
+            <List.Item.Detail.Metadata>
+              <List.Item.Detail.Metadata.Label title={coin.name} icon={coin.image} />
+              <List.Item.Detail.Metadata.Label title="Price" text={`$${formatPrice(currentPrice)}`} />
+              <List.Item.Detail.Metadata.Label title="Price Change (24h)" text={priceChange} />
+              <List.Item.Detail.Metadata.Label title="Market Cap" text={`$${formatPrice(coin.market_cap)}`} />
+              <List.Item.Detail.Metadata.Label title="Volume" text={`$${formatPrice(coin.total_volume)}`} />
+              <List.Item.Detail.Metadata.Separator />
+
+              <List.Item.Detail.Metadata.Link
+                title="View more"
+                target={`https://www.coingecko.com/en/coins/${coin.id}`}
+                text="CoinGecko"
+              />
+            </List.Item.Detail.Metadata>
+          }
+        />
+      }
       actions={
         <ActionPanel>
           <Action title="Refresh Price" onAction={refreshPrice} />
-          {isInWatchlist(symbol) ? (
-            <Action title="Remove from Watchlist" onAction={() => removeFromWatchlist(symbol)} />
+          {isInWatchlist(coin.id) ? (
+            <Action title="Remove from Watchlist" onAction={() => removeFromWatchlist(coin.id)} />
           ) : (
-            <Action title="Add to Watchlist" onAction={() => addToWatchlist(symbol)} />
+            <Action title="Add to Watchlist" onAction={() => addToWatchlist(coin.id)} />
           )}
         </ActionPanel>
       }
@@ -34,20 +61,24 @@ function TokenPriceContent() {
   const [search, setSearch] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  const { data: symbols } = useSymbols();
-  const { watchlist, isInWatchlist } = useWatchlist();
+  const { data: coins } = useCoins();
 
-  const filterTokens = (tokens: string[]) => {
-    return tokens
-      .filter((symbol) => symbol.toLowerCase().includes(search?.toLowerCase() ?? ""))
+  const { data: symbols } = useSymbols();
+  const { isInWatchlist } = useWatchlist();
+  const watchlistCoins = coins?.filter((coin) => isInWatchlist(coin.id));
+  const otherCoins = coins?.filter((coin) => !isInWatchlist(coin.id));
+
+  const filterTokens = (coins: CoinData[]) => {
+    return coins
+      .filter((coin) => coin.symbol.toLowerCase().includes(search?.toLowerCase() ?? ""))
       .sort((a, b) => {
-        if (!search) return a < b ? -1 : a === b ? 0 : 1;
-        return distance(a, search) - distance(b, search);
+        if (!search) return a.symbol < b.symbol ? -1 : a.symbol === b.symbol ? 0 : 1;
+        return distance(a.symbol, search) - distance(b.symbol, search);
       });
   };
 
-  const filteredWatchlist = filterTokens(watchlist ?? []);
-  const filteredAllTokens = filterTokens(symbols ?? []);
+  const filteredWatchlist = filterTokens(watchlistCoins ?? []);
+  const filteredAllTokens = filterTokens(otherCoins ?? []);
 
   return (
     <>
@@ -63,15 +94,15 @@ function TokenPriceContent() {
         {symbols && (
           <>
             <List.Section title="Watchlist">
-              {filteredWatchlist?.map((symbol) => (
-                <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
+              {filteredWatchlist?.map((coin) => (
+                <TickerListItem key={coin.id} coin={coin} isSelected={token === coin.id} />
               ))}
             </List.Section>
             <List.Section title="All Tokens">
               {filteredAllTokens
-                .filter((symbol) => !isInWatchlist(symbol))
-                .map((symbol) => (
-                  <TickerListItem key={symbol} symbol={symbol} isSelected={token === symbol} />
+                .filter((coin) => !isInWatchlist(coin.id))
+                .map((coin) => (
+                  <TickerListItem key={coin.id} coin={coin} isSelected={token === coin.id} />
                 ))}
             </List.Section>
           </>
