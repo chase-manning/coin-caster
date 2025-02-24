@@ -51,8 +51,18 @@ export default function useCoins() {
   });
 
   const coins = useMemo(() => {
-    const ids = new Set(firstPage.map((coin) => coin.id));
-    return [...firstPage, ...secondPage.filter((coin) => !ids.has(coin.id))];
+    const ids = new Set();
+    const result = [];
+    // the coins are sorted by market cap, so we take the first
+    // time a symbol occurs, it will be the version with the highest market cap
+    // which is what we want
+    for (const coin of firstPage.concat(secondPage)) {
+      if (!ids.has(coin.id)) {
+        result.push(coin);
+      }
+      ids.add(coin.id);
+    }
+    return result;
   }, [firstPage, secondPage]);
 
   return { coins, isLoading: isLoadingFirstPage || isLoadingSecondPage };
