@@ -13,13 +13,6 @@
       "subtitle": "Coin Caster",
       "description": "Get the price for any crypto asset",
       "mode": "view"
-    },
-    {
-      "name": "watchlist-prices",
-      "title": "Watchlist Prices",
-      "subtitle": "Coin Caster",
-      "description": "View prices for assets in your watchlist",
-      "mode": "view"
     }
   ],
   "dependencies": {
