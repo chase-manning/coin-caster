@@ -57,10 +57,10 @@ export default function useCoins() {
     // time a symbol occurs, it will be the version with the highest market cap
     // which is what we want
     for (const coin of firstPage.concat(secondPage)) {
-      if (!ids.has(coin.id)) {
+      if (!ids.has(coin.symbol)) {
         result.push(coin);
       }
-      ids.add(coin.id);
+      ids.add(coin.symbol);
     }
     return result;
   }, [firstPage, secondPage]);
