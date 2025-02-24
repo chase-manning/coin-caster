@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiBaseUrl } from "./constants";
 import fetch from "node-fetch";
+import { useMemo } from "react";
 
 export type CoinData = {
   id: string;
@@ -15,7 +16,7 @@ export type CoinData = {
   high_24h: number;
   low_24h: number;
   price_change_24h: number;
-  price_change_percentage_24h: number;
+  price_change_percentage_24h?: number;
   market_cap_change_24h: number;
   market_cap_change_percentage_24h: number;
   circulating_supply: number;
@@ -31,15 +32,27 @@ export type CoinData = {
   price_change_percentage_24h_in_currency: number;
 };
 
-const getCoins = async (): Promise<CoinData[]> => {
-  const response = await fetch(`${apiBaseUrl}/coins`);
+const getCoins = async (page: number): Promise<CoinData[]> => {
+  const response = await fetch(`${apiBaseUrl}/coins?page=${page}`);
   return response.json() as Promise<CoinData[]>;
 };
 
-export default function useSymbols() {
-  return useQuery({
+export default function useCoins() {
+  const { data: firstPage = [], isLoading: isLoadingFirstPage } = useQuery({
     queryKey: ["coins"],
-    queryFn: () => getCoins(),
+    queryFn: () => getCoins(1),
     staleTime: 60_000, // 1 minute
   });
+
+  const { data: secondPage = [], isLoading: isLoadingSecondPage } = useQuery({
+    queryKey: ["coins", 2],
+    queryFn: () => getCoins(2),
+    staleTime: 60_000, // 1 minute
+  });
+
+  const coins = useMemo(() => {
+    return [...firstPage, ...secondPage];
+  }, [firstPage, secondPage]);
+
+  return { coins, isLoading: isLoadingFirstPage || isLoadingSecondPage };
 }
