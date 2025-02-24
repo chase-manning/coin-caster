@@ -3,7 +3,7 @@
   "name": "coin-caster",
   "title": "Coin Caster",
   "description": "Get the price for any crypto asset in Raycast",
-  "icon": "extension-icon.png",
+  "icon": "coincaster.png",
   "author": "chase_manning",
   "license": "MIT",
   "commands": [
