@@ -51,7 +51,8 @@ export default function useCoins() {
   });
 
   const coins = useMemo(() => {
-    return [...firstPage, ...secondPage];
+    const ids = new Set(firstPage.map((coin) => coin.id));
+    return [...firstPage, ...secondPage.filter((coin) => !ids.has(coin.id))];
   }, [firstPage, secondPage]);
 
   return { coins, isLoading: isLoadingFirstPage || isLoadingSecondPage };
