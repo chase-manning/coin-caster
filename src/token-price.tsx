@@ -63,8 +63,9 @@ function TokenPriceContent() {
     return coins
       .filter((coin) => coin.symbol.toLowerCase().includes(search?.toLowerCase() ?? ""))
       .sort((a, b) => {
-        if (!search) return a.symbol < b.symbol ? -1 : a.symbol === b.symbol ? 0 : 1;
-        return distance(a.symbol, search) - distance(b.symbol, search);
+        if (!search) return b.market_cap - a.market_cap;
+        const d = distance(a.symbol, search) - distance(b.symbol, search);
+        return d === 0 ? b.market_cap - a.market_cap : d;
       });
   };
 
