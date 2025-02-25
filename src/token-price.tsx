@@ -111,32 +111,30 @@ function TokenPriceContent() {
   };
 
   return (
-    <>
-      <Doughnut data={data} />
-      <List
-        isLoading={isLoading}
-        isShowingDetail
-        filtering={false}
-        onSearchTextChange={setSearch}
-        navigationTitle="Token"
-        searchBarPlaceholder="Search for a token..."
-      >
-        {symbols && (
-          <>
-            <List.Section title="Watchlist">
-              {filteredWatchlist?.map((coin) => <TickerListItem key={coin.id} coin={coin} />)}
-            </List.Section>
-            <List.Section title="All Tokens">
-              {filteredAllTokens
-                .filter((coin) => !isInWatchlist(coin.id))
-                .map((coin) => (
-                  <TickerListItem key={coin.id} coin={coin} />
-                ))}
-            </List.Section>
-          </>
-        )}
-      </List>
-    </>
+    <List
+      isLoading={isLoading}
+      isShowingDetail
+      filtering={false}
+      onSearchTextChange={setSearch}
+      navigationTitle="Token"
+      searchBarPlaceholder="Search for a token..."
+    >
+      {symbols && (
+        <>
+          {data && <Doughnut data={data} />}
+          <List.Section title="Watchlist">
+            {filteredWatchlist?.map((coin) => <TickerListItem key={coin.id} coin={coin} />)}
+          </List.Section>
+          <List.Section title="All Tokens">
+            {filteredAllTokens
+              .filter((coin) => !isInWatchlist(coin.id))
+              .map((coin) => (
+                <TickerListItem key={coin.id} coin={coin} />
+              ))}
+          </List.Section>
+        </>
+      )}
+    </List>
   );
 }
 
