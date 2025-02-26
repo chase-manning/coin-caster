@@ -20,5 +20,8 @@ export default function useChart(id: string, query: boolean) {
     enabled: query,
   });
 
-  return { chart: data, isLoading };
+  const now = Date.now();
+  const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+  return { chart: data?.filter((c) => c.timestamp > oneDayAgo), isLoading };
 }
