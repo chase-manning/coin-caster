@@ -1,5 +1,5 @@
 import { Action, ActionPanel, List, open } from "@raycast/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useWatchlist from "./useWatchlist";
 import { distance } from "fastest-levenshtein";
 import useSymbols from "./useSymbols";
@@ -7,14 +7,12 @@ import CommandWrapper from "./CommandWrapper";
 import { formatPrice } from "./utilities";
 import useCoins, { CoinData } from "./useCoins";
 import useChart from "./useChart";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
+import getChartDataUrl from "./get-chart-data-url";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-function TickerListItem({ coin }: { coin: CoinData }) {
+function TickerListItem({ coin, active }: { coin: CoinData; active: boolean }) {
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
-  const { chart, isLoading } = useChart(coin.id);
+  const { chart } = useChart(coin.id, active);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   const currentPrice = coin.current_price;
   const priceChange =
@@ -23,6 +21,14 @@ function TickerListItem({ coin }: { coin: CoinData }) {
       ? `+${coin.price_change_percentage_24h?.toFixed(2)}%`
       : `${coin.price_change_percentage_24h?.toFixed(2)}%`);
 
+  useEffect(() => {
+    if (!active) return;
+    if (!chart) return;
+    getChartDataUrl(chart).then((url) => {
+      setDataUrl(url);
+    });
+  }, [active, chart]);
+
   return (
     <List.Item
       id={coin.id}
@@ -30,6 +36,7 @@ function TickerListItem({ coin }: { coin: CoinData }) {
       accessories={[{ text: `$${formatPrice(currentPrice)}` }]}
       detail={
         <List.Item.Detail
+          markdown={`![Illustration](${dataUrl ?? ""})`}
           metadata={
             <List.Item.Detail.Metadata>
               <List.Item.Detail.Metadata.Label title={coin.name} icon={coin.image} />
@@ -37,10 +44,6 @@ function TickerListItem({ coin }: { coin: CoinData }) {
               {priceChange && <List.Item.Detail.Metadata.Label title="Price Change (24h)" text={priceChange} />}
               <List.Item.Detail.Metadata.Label title="Market Cap" text={`$${formatPrice(coin.market_cap)}`} />
               <List.Item.Detail.Metadata.Label title="Volume" text={`$${formatPrice(coin.total_volume)}`} />
-              <List.Item.Detail.Metadata.Label
-                title="Chart"
-                text={isLoading ? "Loading..." : (chart?.length.toString() ?? "Error Loading Chart")}
-              />
               <List.Item.Detail.Metadata.Separator />
             </List.Item.Detail.Metadata>
           }
@@ -64,6 +67,7 @@ function TokenPriceContent() {
   const [search, setSearch] = useState<string | null>(null);
 
   const { coins, isLoading } = useCoins();
+  const [selected, setSelected] = useState<string | null>(null);
 
   const { data: symbols } = useSymbols();
   const { isInWatchlist } = useWatchlist();
@@ -83,33 +87,6 @@ function TokenPriceContent() {
   const filteredWatchlist = filterTokens(watchlistCoins ?? []);
   const filteredAllTokens = filterTokens(otherCoins ?? []);
 
-  const data = {
-    labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-    datasets: [
-      {
-        label: "# of Votes",
-        data: [12, 19, 3, 5, 2, 3],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.2)",
-          "rgba(54, 162, 235, 0.2)",
-          "rgba(255, 206, 86, 0.2)",
-          "rgba(75, 192, 192, 0.2)",
-          "rgba(153, 102, 255, 0.2)",
-          "rgba(255, 159, 64, 0.2)",
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-          "rgba(255, 159, 64, 1)",
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
   return (
     <List
       isLoading={isLoading}
@@ -118,18 +95,20 @@ function TokenPriceContent() {
       onSearchTextChange={setSearch}
       navigationTitle="Token"
       searchBarPlaceholder="Search for a token..."
+      onSelectionChange={(item) => setSelected(item)}
     >
       {symbols && (
         <>
-          {data && <Doughnut data={data} />}
           <List.Section title="Watchlist">
-            {filteredWatchlist?.map((coin) => <TickerListItem key={coin.id} coin={coin} />)}
+            {filteredWatchlist?.map((coin) => (
+              <TickerListItem key={coin.id} coin={coin} active={coin.id === selected} />
+            ))}
           </List.Section>
           <List.Section title="All Tokens">
             {filteredAllTokens
               .filter((coin) => !isInWatchlist(coin.id))
               .map((coin) => (
-                <TickerListItem key={coin.id} coin={coin} />
+                <TickerListItem key={coin.id} coin={coin} active={coin.id === selected} />
               ))}
           </List.Section>
         </>
