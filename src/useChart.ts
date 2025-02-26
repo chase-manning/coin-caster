@@ -17,6 +17,7 @@ export default function useChart(id: string, query: boolean) {
     queryKey: [`${id}-chart`],
     queryFn: () => getChart(id),
     staleTime: 60_000, // 1 minute
+    enabled: query,
   });
 
   return { chart: data, isLoading };
