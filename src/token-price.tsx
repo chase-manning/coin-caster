@@ -1,14 +1,18 @@
 import { Action, ActionPanel, List, open } from "@raycast/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useWatchlist from "./useWatchlist";
 import { distance } from "fastest-levenshtein";
 import useSymbols from "./useSymbols";
 import CommandWrapper from "./CommandWrapper";
 import { formatPrice } from "./utilities";
 import useCoins, { CoinData } from "./useCoins";
+import useChart from "./useChart";
+import getChartDataUrl from "./get-chart-data-url";
 
-function TickerListItem({ coin }: { coin: CoinData }) {
+function TickerListItem({ coin, active }: { coin: CoinData; active: boolean }) {
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+  const { chart, dataUpdatedAt } = useChart(coin.id, active);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   const currentPrice = coin.current_price;
   const priceChange =
@@ -17,6 +21,14 @@ function TickerListItem({ coin }: { coin: CoinData }) {
       ? `+${coin.price_change_percentage_24h?.toFixed(2)}%`
       : `${coin.price_change_percentage_24h?.toFixed(2)}%`);
 
+  useEffect(() => {
+    if (!active) return;
+    if (!chart) return;
+    getChartDataUrl(chart).then((url) => {
+      setDataUrl(url);
+    });
+  }, [active, dataUpdatedAt]);
+
   return (
     <List.Item
       id={coin.id}
@@ -24,6 +36,7 @@ function TickerListItem({ coin }: { coin: CoinData }) {
       accessories={[{ text: `$${formatPrice(currentPrice)}` }]}
       detail={
         <List.Item.Detail
+          markdown={`![Illustration](${dataUrl ?? ""})`}
           metadata={
             <List.Item.Detail.Metadata>
               <List.Item.Detail.Metadata.Label title={coin.name} icon={coin.image} />
@@ -31,6 +44,7 @@ function TickerListItem({ coin }: { coin: CoinData }) {
               {priceChange && <List.Item.Detail.Metadata.Label title="Price Change (24h)" text={priceChange} />}
               <List.Item.Detail.Metadata.Label title="Market Cap" text={`$${formatPrice(coin.market_cap)}`} />
               <List.Item.Detail.Metadata.Label title="Volume" text={`$${formatPrice(coin.total_volume)}`} />
+              <List.Item.Detail.Metadata.Separator />
             </List.Item.Detail.Metadata>
           }
         />
@@ -53,6 +67,7 @@ function TokenPriceContent() {
   const [search, setSearch] = useState<string | null>(null);
 
   const { coins, isLoading } = useCoins();
+  const [selected, setSelected] = useState<string | null>(null);
 
   const { data: symbols } = useSymbols();
   const { isInWatchlist } = useWatchlist();
@@ -73,31 +88,32 @@ function TokenPriceContent() {
   const filteredAllTokens = filterTokens(otherCoins ?? []);
 
   return (
-    <>
-      <List
-        isLoading={isLoading}
-        isShowingDetail
-        filtering={false}
-        onSearchTextChange={setSearch}
-        navigationTitle="Token"
-        searchBarPlaceholder="Search for a token..."
-      >
-        {symbols && (
-          <>
-            <List.Section title="Watchlist">
-              {filteredWatchlist?.map((coin) => <TickerListItem key={coin.id} coin={coin} />)}
-            </List.Section>
-            <List.Section title="All Tokens">
-              {filteredAllTokens
-                .filter((coin) => !isInWatchlist(coin.id))
-                .map((coin) => (
-                  <TickerListItem key={coin.id} coin={coin} />
-                ))}
-            </List.Section>
-          </>
-        )}
-      </List>
-    </>
+    <List
+      isLoading={isLoading}
+      isShowingDetail
+      filtering={false}
+      onSearchTextChange={setSearch}
+      navigationTitle="Token"
+      searchBarPlaceholder="Search for a token..."
+      onSelectionChange={(item) => setSelected(item)}
+    >
+      {symbols && (
+        <>
+          <List.Section title="Watchlist">
+            {filteredWatchlist?.map((coin) => (
+              <TickerListItem key={coin.id} coin={coin} active={coin.id === selected} />
+            ))}
+          </List.Section>
+          <List.Section title="All Tokens">
+            {filteredAllTokens
+              .filter((coin) => !isInWatchlist(coin.id))
+              .map((coin) => (
+                <TickerListItem key={coin.id} coin={coin} active={coin.id === selected} />
+              ))}
+          </List.Section>
+        </>
+      )}
+    </List>
   );
 }
 

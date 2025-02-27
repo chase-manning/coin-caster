@@ -9,3 +9,4 @@ compiled_raycast_swift
 
 # misc
 .DS_Store
+.aider*
