@@ -11,7 +11,7 @@ import getChartDataUrl from "./get-chart-data-url";
 
 function TickerListItem({ coin, active }: { coin: CoinData; active: boolean }) {
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
-  const { chart } = useChart(coin.id, active);
+  const { chart, dataUpdatedAt } = useChart(coin.id, active);
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   const currentPrice = coin.current_price;
@@ -27,7 +27,7 @@ function TickerListItem({ coin, active }: { coin: CoinData; active: boolean }) {
     getChartDataUrl(chart).then((url) => {
       setDataUrl(url);
     });
-  }, [active, chart]);
+  }, [active, dataUpdatedAt]);
 
   return (
     <List.Item

@@ -13,7 +13,7 @@ const getChart = async (id: string): Promise<ChartData> => {
 };
 
 export default function useChart(id: string, query: boolean) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, dataUpdatedAt } = useQuery({
     queryKey: [`${id}-chart`],
     queryFn: () => getChart(id),
     staleTime: 60_000, // 1 minute
@@ -23,5 +23,5 @@ export default function useChart(id: string, query: boolean) {
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
 
-  return { chart: data?.filter((c) => c.timestamp > oneDayAgo), isLoading };
+  return { chart: data?.filter((c) => c.timestamp > oneDayAgo), isLoading, dataUpdatedAt };
 }
