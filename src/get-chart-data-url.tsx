@@ -2,7 +2,7 @@ import { ChartData } from "./useChart";
 import { LineChart, Line, XAxis, YAxis } from "recharts";
 import ReactDOMServer from "react-dom/server";
 
-const getChartDataUrl  = async (chart: ChartData) => {
+const getChartDataUrl = async (chart: ChartData) => {
   const isUp = chart[0].price < chart[chart.length - 1].price;
   const lineColor = isUp ? "#63fe7d" : "#FE6364";
 
@@ -13,7 +13,7 @@ const getChartDataUrl  = async (chart: ChartData) => {
 
   const minPrice = Math.min(...chart.map((c) => c.price));
   const maxPrice = Math.max(...chart.map((c) => c.price));
-  const padding = (maxPrice - minPrice) * 0.1; //
+  const padding = (maxPrice - minPrice) * 0.1;
 
   const svgChart = ReactDOMServer.renderToString(
     <svg width="800" height="300" xmlns="http://www.w3.org/2000/svg">
@@ -29,4 +29,4 @@ const getChartDataUrl  = async (chart: ChartData) => {
   return `data:image/svg+xml;base64,${base64Svg}`;
 };
 
-export default getChartDataUrl  ;
+export default getChartDataUrl;
