@@ -8,8 +8,8 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "token-price",
-      "title": "Token Price",
+      "name": "token-prices",
+      "title": "Token Prices",
       "subtitle": "Coin Caster",
       "description": "Get the price for any crypto asset",
       "mode": "view"
