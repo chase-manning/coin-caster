@@ -6,6 +6,10 @@
   "icon": "coin-caster-logo.png",
   "author": "chase_manning",
   "license": "MIT",
+  "categories": [
+    "Finance",
+    "Data"
+  ],
   "commands": [
     {
       "name": "token-prices",
