@@ -24,6 +24,7 @@ function TickerListItem({ coin, active }: { coin: CoinData; active: boolean }) {
   useEffect(() => {
     if (!active) return;
     if (!chart) return;
+    if (chart.length === 0) return;
     getChartDataUrl(chart).then((url) => {
       setDataUrl(url);
     });
