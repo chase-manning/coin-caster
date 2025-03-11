@@ -1,10 +1,16 @@
 import { LocalStorage } from "@raycast/api";
+import { showFailureToast } from "@raycast/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function useWatchlist() {
   const getWatchlist = async (): Promise<string[]> => {
-    const rawWatchlist = await LocalStorage.getItem<string>("watchlist");
-    return rawWatchlist ? JSON.parse(rawWatchlist) : [];
+    try {
+      const rawWatchlist = await LocalStorage.getItem<string>("watchlist");
+      return rawWatchlist ? JSON.parse(rawWatchlist) : [];
+    } catch (error) {
+      showFailureToast("Failed to fetch watchlist");
+      return [];
+    }
   };
 
   const queryClient = useQueryClient();
