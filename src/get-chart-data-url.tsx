@@ -1,10 +1,12 @@
 import { ChartData } from "./useChart";
 import { LineChart, Line, XAxis, YAxis } from "recharts";
 import ReactDOMServer from "react-dom/server";
+import { environment } from "@raycast/api";
+import { COLORS } from "./colors";
 
 const getChartDataUrl = async (chart: ChartData) => {
   const isUp = chart[0].price < chart[chart.length - 1].price;
-  const lineColor = isUp ? "#63fe7d" : "#FE6364";
+  const lineColor = COLORS[environment.appearance][isUp ? "green" : "red"];
 
   const formattedChart = chart.map((c) => ({
     time: new Date(c.timestamp).toLocaleTimeString(),
