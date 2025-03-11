@@ -111,11 +111,9 @@ function TokenPriceContent() {
             ))}
           </List.Section>
           <List.Section title="All Tokens">
-            {filteredAllTokens
-              .filter((coin) => !isInWatchlist(coin.id))
-              .map((coin) => (
-                <TickerListItem key={coin.id} coin={coin} active={coin.id === selected} />
-              ))}
+            {filteredAllTokens.map((coin) => (
+              <TickerListItem key={coin.id} coin={coin} active={coin.id === selected} />
+            ))}
           </List.Section>
         </>
       )}
