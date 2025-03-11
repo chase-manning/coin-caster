@@ -8,6 +8,7 @@ import { formatPrice } from "./utilities";
 import useCoins, { CoinData } from "./useCoins";
 import useChart from "./useChart";
 import getChartDataUrl from "./get-chart-data-url";
+import { showFailureToast } from "@raycast/utils";
 
 function TickerListItem({ coin, active }: { coin: CoinData; active: boolean }) {
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
@@ -25,9 +26,13 @@ function TickerListItem({ coin, active }: { coin: CoinData; active: boolean }) {
     if (!active) return;
     if (!chart) return;
     if (chart.length === 0) return;
-    getChartDataUrl(chart).then((url) => {
-      setDataUrl(url);
-    });
+    getChartDataUrl(chart)
+      .then((url) => {
+        setDataUrl(url);
+      })
+      .catch(() => {
+        showFailureToast("Failed to fetch chart data");
+      });
   }, [active, dataUpdatedAt]);
 
   return (
