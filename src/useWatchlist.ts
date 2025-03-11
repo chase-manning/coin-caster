@@ -30,12 +30,14 @@ export default function useWatchlist() {
 
   const addToWatchlist = async (symbol: string) => {
     const watchlist = await getWatchlist();
+    if (watchlist.includes(symbol)) return;
     await LocalStorage.setItem("watchlist", JSON.stringify([...watchlist, symbol]));
     await refreshWatchlist();
   };
 
   const removeFromWatchlist = async (symbol: string) => {
     const watchlist = await getWatchlist();
+    if (!watchlist.includes(symbol)) return;
     await LocalStorage.setItem("watchlist", JSON.stringify(watchlist.filter((s: string) => s !== symbol)));
     await refreshWatchlist();
   };
