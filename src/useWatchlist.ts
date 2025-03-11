@@ -25,21 +25,33 @@ export default function useWatchlist() {
   };
 
   const refreshWatchlist = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    } catch (error) {
+      showFailureToast("Failed to refresh watchlist");
+    }
   };
 
   const addToWatchlist = async (symbol: string) => {
-    const watchlist = await getWatchlist();
-    if (watchlist.includes(symbol)) return;
-    await LocalStorage.setItem("watchlist", JSON.stringify([...watchlist, symbol]));
-    await refreshWatchlist();
+    try {
+      const watchlist = await getWatchlist();
+      if (watchlist.includes(symbol)) return;
+      await LocalStorage.setItem("watchlist", JSON.stringify([...watchlist, symbol]));
+      await refreshWatchlist();
+    } catch (error) {
+      showFailureToast("Failed to add to watchlist");
+    }
   };
 
   const removeFromWatchlist = async (symbol: string) => {
-    const watchlist = await getWatchlist();
-    if (!watchlist.includes(symbol)) return;
-    await LocalStorage.setItem("watchlist", JSON.stringify(watchlist.filter((s: string) => s !== symbol)));
-    await refreshWatchlist();
+    try {
+      const watchlist = await getWatchlist();
+      if (!watchlist.includes(symbol)) return;
+      await LocalStorage.setItem("watchlist", JSON.stringify(watchlist.filter((s: string) => s !== symbol)));
+      await refreshWatchlist();
+    } catch (error) {
+      showFailureToast("Failed to remove from watchlist");
+    }
   };
 
   return { watchlist, addToWatchlist, removeFromWatchlist, isInWatchlist, isLoading };
