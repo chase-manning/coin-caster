@@ -99,7 +99,6 @@ function TokenPriceContent() {
       isShowingDetail
       filtering={false}
       onSearchTextChange={setSearch}
-      navigationTitle="Token"
       searchBarPlaceholder="Search for a token..."
       onSelectionChange={(item) => setSelected(item)}
     >
