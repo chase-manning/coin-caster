@@ -96,7 +96,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Built with [Raycast](https://raycast.com/)
 - Powered by [CoinGecko API](https://www.coingecko.com/en/api)
-- Created by [Chase Manning](https://github.com/chase-manning)
+- Created by [Aurora Labs](https://auroralabs.ltd/)
 
 ## Support
 
