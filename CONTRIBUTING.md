@@ -58,7 +58,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 ```bash
 # Clone your fork of the repo
-git clone https://github.com/YOUR_USERNAME/coin-caster.git
+git clone https://github.com/chase-manning/coin-caster.git
 
 # Navigate to the project directory
 cd coin-caster
