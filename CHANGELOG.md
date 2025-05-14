@@ -11,7 +11,7 @@
 - Removed a redundant filter
 - More cleanly handle invalid prices
 
-## v1.1.0 - 2025-05-014
+## v1.1.1 - 2025-05-014
 
 - Fix error loading asset symbols
 - Remove redundant API call to improve performance
