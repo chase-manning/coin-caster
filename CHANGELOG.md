@@ -4,7 +4,6 @@
 
 - Fix error loading asset symbols
 - Remove redundant API call to improve performance
-- More cleanly handles invalid prices
 
 ## 1.1.0 - 2025-04-02
 
